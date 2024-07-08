@@ -1,3 +1,5 @@
+"use client";
+
 import {
     Card,
     CardContent,
@@ -6,10 +8,12 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import exp from "constants";
 import Image from "next/image";
 import { Badge } from "./ui/badge";
 import { cn } from "@/lib/utils";
+import { Button } from "./ui/button";
+import { useCart } from "@/context/cart-context";
+import { useState } from "react";
 
 interface FoodCardProps {
     name: string;
@@ -30,8 +34,17 @@ function FoodCard({
     isVeg,
     className,
 }: FoodCardProps) {
+    const {
+        getQuantity,
+        increaseCartQuantity,
+        decreaseCartQuantity,
+        removeCartItem,
+    } = useCart();
+
+    const quantity = getQuantity(name);
+
     return (
-        <Card className={className}>
+        <Card className={`${className} `}>
             <CardHeader>
                 <Image
                     src={image}
@@ -41,16 +54,54 @@ function FoodCard({
                     height={300}
                 />
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-2">
                 <div className="flex justify-between">
                     <CardTitle className="text-lg font-bold">{name}</CardTitle>
                     <VegIcon isVeg={isVeg} />
                 </div>
                 <CardDescription>{description}</CardDescription>
+                <div className="flex justify-between">
+                    <Badge variant={"outline"} className="text-xs">
+                        {category}
+                    </Badge>
+                    <span className="font-bold text-muted-foreground">
+                        ₹{price}
+                    </span>
+                </div>
             </CardContent>
-            <CardFooter className="flex justify-between">
-                <span className="font-bold">₹{price}</span>
-                <Badge className="text-xs">{category}</Badge>
+            <CardFooter className="justify-center">
+                {quantity === 0 ? (
+                    <Button
+                        className="w-full"
+                        onClick={() => {
+                            increaseCartQuantity(name);
+
+                            console.log(`${name} : ${quantity} `);
+                        }}
+                    >
+                        Add
+                    </Button>
+                ) : (
+                    <div className="">
+                        <Button
+                            variant={"outline"}
+                            onClick={() => {
+                                decreaseCartQuantity(name);
+                            }}
+                        >
+                            -
+                        </Button>
+                        <span className="px-2">{quantity}</span>
+                        <Button
+                            variant={"outline"}
+                            onClick={() => {
+                                increaseCartQuantity(name);
+                            }}
+                        >
+                            +
+                        </Button>
+                    </div>
+                )}
             </CardFooter>
         </Card>
     );
