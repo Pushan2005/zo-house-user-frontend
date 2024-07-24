@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/server";
+
 import FoodCard from "@/components/food-card";
 import {
     Select,
@@ -45,14 +48,20 @@ export const foodItems: FoodItem[] = [
     },
 ];
 
-export default function Home() {
+export default async function Home() {
+    const supabase = createClient();
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user) {
+        redirect("/login");
+    }
+
     const tables: string[] = ["Degen Lounge", "Black Pearl", "Eden Garden"];
 
     return (
         <>
             <div className="w-full backdrop-blur-lg top-0 sticky pb-2">
                 <h1 className="text-2xl font-bold text-center mt-1">
-                    Zo House Secret Menu{" "}
+                    Zo House Cafe{" "}
                 </h1>
             </div>
             <div className="w-full p-4 pt-8">
