@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { login } from "./actions";
+import { signup } from "../login/actions";
 import { Input } from "@/components/ui/input";
 import Script from "next/script";
 import { createClient } from "@/utils/supabase/server";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 
-export default function LoginPage() {
+export default function SignUpPage() {
     return (
         <>
             <div className="flex flex-col justify-center items-center p-8">
-                <h1 className="text-2xl font-bold mb-8">Log in to proceed</h1>
+                <h1 className="text-2xl font-bold mb-8">Sign Up</h1>
                 {/* <Script src="https://accounts.google.com/gsi/client" async></Script> */}
                 <form className="flex flex-col justify-center items-center space-y-2">
                     <div className="">
@@ -28,13 +28,13 @@ export default function LoginPage() {
                     </div>
 
                     <div className="space-y-4 flex flex-col">
-                        <Button className="w-56 mt-4" formAction={login}>
-                            Log in
+                        <Button className="w-56 mt-4" formAction={signup}>
+                            Sign Up
                         </Button>
                     </div>
-                    <Link className="font-normal pt-8" href="/signup">
+                    <Link className="font-normal pt-8" href="/login">
                         <span className="text-md underline underline-offset-2">
-                            Dont Have an account? Sign Up here
+                            Already have an account? Log in here
                         </span>
                     </Link>
                     {/* <div
