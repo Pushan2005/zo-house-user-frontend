@@ -6,20 +6,23 @@ import { z } from "zod";
 
 import { createClient } from "@/utils/supabase/server";
 
-export async function login(formData: FormData) {
+interface LoginForm {
+    email: string;
+    password: string;
+}
+
+interface SignUpForm extends LoginForm {
+    name: string;
+    confirmPassword: string;
+}
+
+export async function login(formData: LoginForm) {
     const supabase = createClient();
 
-    const formSchema = z.object({
-        email: z.string().email(),
-        password: z.string(),
+    const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
     });
-
-    const data = formSchema.parse({
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
-    });
-
-    const { error } = await supabase.auth.signInWithPassword(data);
 
     if (error) {
         redirect("/error");
@@ -29,22 +32,22 @@ export async function login(formData: FormData) {
     redirect("/");
 }
 
-export async function signup(formData: FormData) {
+export async function signup(formData: SignUpForm) {
     const supabase = createClient();
 
-    const formSchema = z.object({
-        email: z.string().email(),
-        password: z.string(),
+    const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+            data: {
+                name: formData.name,
+                debt: 0,
+            },
+        },
     });
-
-    const data = formSchema.parse({
-        email: formData.get("email") as string,
-        password: formData.get("password") as string,
-    });
-
-    const { error } = await supabase.auth.signUp(data);
 
     if (error) {
+        console.error(`Error signing up: ${error.message}`);
         redirect("/error");
     }
 
