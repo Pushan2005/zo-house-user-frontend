@@ -38,6 +38,7 @@ function FoodCard({
         getQuantity,
         increaseCartQuantity,
         decreaseCartQuantity,
+        changeTableName,
         removeCartItem,
     } = useCart();
 

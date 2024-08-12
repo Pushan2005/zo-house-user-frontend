@@ -10,4 +10,5 @@ export type Order = {
     }[];
     price: number;
     orderType: string; // cash or online
+    table: string;
 };
