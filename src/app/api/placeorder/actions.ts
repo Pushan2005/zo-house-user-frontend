@@ -6,16 +6,13 @@ import { v4 as uuidv4 } from "uuid";
 import { User, Item, Inventory, Order, Menu } from "@/models/models";
 
 export interface incomingOrder {
-    user: {
-        name: string;
-        email?: string;
-        phone?: number;
-    };
+    name: string;
     items: {
         name: string;
         quantity: number;
     }[];
     price: number;
+    orderTime: string;
     orderType: string; // cash or online
 }
 
@@ -37,12 +34,13 @@ export async function disconnectDb() {
 }
 
 export async function placeOrder(order: incomingOrder) {
-    const { name } = order.user;
+    const name = order.name;
     const orderItems = order.items;
     const orderPrice = order.price;
     const orderType = order.orderType;
+    const time = order.orderTime;
     const status = "pending";
-    const transactionId = `order_${uuidv4()}`;
+    const transactionId = `${name}_${time}_${uuidv4()}`;
 
     const findUserById = async (name: string) => {
         const user = await User.findOne({ name: name });

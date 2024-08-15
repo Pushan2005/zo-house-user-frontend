@@ -5,9 +5,8 @@ import FoodCard from "@/components/food-card";
 import CartTotal from "./cart-total";
 import { foodItems } from "./temp_data";
 import TableSelector from "./table-select";
-import { formatTableName } from "./actions";
-import { useCart } from "@/context/cart-context";
-import { use } from "react";
+import LogoutButton from "@/components/logout-button";
+import Test from "./test-button";
 
 export default async function Home({
     searchParams,
@@ -15,23 +14,26 @@ export default async function Home({
     searchParams: URLSearchParams;
 }) {
     const supabase = createClient();
+    const params = new URLSearchParams(searchParams);
+    const table = params.get("table") || "Degen Lounge";
+
     const { data, error } = await supabase.auth.getUser();
     if (error || !data?.user) {
         redirect("/login");
     }
 
-    const params = new URLSearchParams(searchParams);
-    const table = formatTableName(params.get("table") || "Eden Garden");
-    console.log(table);
-
     return (
         <>
             <div className="w-full backdrop-blur-lg top-0 sticky pb-2">
-                <h1 className="text-2xl font-bold text-center mt-1">Cafe </h1>
+                <h1 className="text-2xl font-bold text-center mt-1">Cafe</h1>
             </div>
             <div className="w-full p-4 pt-8">
                 <div className="space-y-4"></div>
-                <TableSelector defaultTable={table} />
+                <div className="flex items-center justify-between">
+                    <TableSelector defaultTable={table} />
+                    <LogoutButton />
+                    <Test />
+                </div>
                 <div className="mt-4">
                     {foodItems.map((foodItem) => (
                         <FoodCard

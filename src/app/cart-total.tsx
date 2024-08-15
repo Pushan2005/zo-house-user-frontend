@@ -13,20 +13,111 @@ import { useCart } from "@/context/cart-context";
 import { foodItems } from "./temp_data";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/utils/supabase/client";
+import { useState } from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import Script from "next/script";
+
+declare global {
+    interface Window {
+        Razorpay: any;
+    }
+}
+const loadScript = () => {
+    return new Promise((resolve) => {
+        const script = document.createElement("script");
+        script.src = "checkout.razorpay.com/v1/checkout.js";
+        script.onload = () => {
+            resolve(true);
+        };
+        script.onerror = () => {
+            resolve(false);
+        };
+        document.body.appendChild(script);
+    });
+};
 
 function CartTotal({ className }: { className?: string }) {
-    const { cartItems } = useCart();
+    const [orderPending, setOrderPending] = useState(false);
+    const { cartItems, setSpecialInstructions, special_Instructions } =
+        useCart();
     const total = cartItems.reduce((acc, item) => {
         const foodItem = foodItems.find((food) => food.name === item.name);
         return acc + ((foodItem && foodItem.price) || 0) * item.quantity;
     }, 0);
+
+    const supabase = createClient();
+
+    const handleChange = (e: any) => {
+        setSpecialInstructions(e.target.value);
+    };
+
+    const handleCheckout = async () => {
+        setOrderPending(true);
+        const res = await loadScript();
+        if (!res) {
+            alert("Razorpay SDK failed to load");
+            setOrderPending(false);
+            return;
+        }
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+        const name = user?.user_metadata.name;
+        const email = user?.email;
+        try {
+            const response = await fetch("/api/create-order", {
+                method: "POST",
+                body: JSON.stringify({ amount: total }),
+            });
+            const data = await response.json();
+            const options = {
+                key: process.env.NEXT_PUBLIC_RZP_KEY_ID!,
+                amount: total * 100, // converts to paise
+                currency: "INR",
+                name: "Zo Cafe",
+                description: "Order Payment Test Transaction",
+                order_id: data.orderId,
+                handler: async function (response: any) {
+                    console.log("Payment Successful: ", response);
+                    // write code to add order to database
+                },
+                prefill: {
+                    name: name,
+                    email: email,
+                    contact: "9999999999",
+                },
+                theme: {
+                    color: "#3399cc",
+                },
+            };
+            const rzp = new window.Razorpay(options);
+            rzp.open();
+        } catch (err) {
+            console.log("Payment failed: ", err);
+        } finally {
+            setOrderPending(false);
+        }
+
+        const currentTime = new Date().toISOString();
+        const payload = {
+            name: "Placeholder Name",
+            items: cartItems,
+            amount: total,
+            orderType: "Placeholder Cash",
+            table: "Placeholder Table",
+            specialInstructions: special_Instructions,
+        };
+    };
 
     return (
         <div className={cn(`${className} `, { "hidden ": total === 0 })}>
             <Sheet>
                 <SheetTrigger className={"w-full flex px-4 justify-between"}>
                     <h1>₹{total}</h1>
-                    <h1>Checkout -{">"}</h1>
+                    <h1>Checkout {""}</h1>
                 </SheetTrigger>
                 <SheetContent side={"bottom"}>
                     <SheetHeader>
@@ -35,52 +126,39 @@ function CartTotal({ className }: { className?: string }) {
                             {cartItems.map((item) => (
                                 <div
                                     key={item.name}
-                                    className="flex justify-between"
+                                    className="flex mt-2 justify-between"
                                 >
                                     <h1>{item.name}</h1>
                                     <h1>{item.quantity}</h1>
                                 </div>
                             ))}
+                            <Separator className="mt-1" />
                         </SheetDescription>
                     </SheetHeader>
                     <SheetFooter className="flex flex-col mt-2 space-y-2">
+                        <div className="mt-1">
+                            <Label
+                                htmlFor="special-instructions"
+                                className="ml-1"
+                            >
+                                Special Instructions
+                            </Label>
+                            <Textarea
+                                className="h-20 w-full"
+                                placeholder="Leave blank if none..."
+                                id="special-instructions"
+                                onChange={handleChange}
+                            />
+                        </div>
                         <div className="flex justify-between">
                             <h1>Total:</h1>
                             <h1>₹{total}</h1>
                         </div>
                         <Button
-                            onClick={async () => {
-                                const url =
-                                    process.env
-                                        .NEXT_PUBLIC_ORDER_PLACEMENT_API || "";
-                                const payload = {
-                                    user: {
-                                        name: "Placeholder User",
-                                        email: "Placeholder Email",
-                                        phone: "Placeholder Phone",
-                                    },
-                                    items: cartItems,
-                                    price: total,
-                                    orderType: "Placeholder Cash",
-                                };
-                                try {
-                                    await fetch(url, {
-                                        method: "POST",
-                                        cache: "no-cache",
-                                        headers: {
-                                            "Content-Type": "application/json",
-                                        },
-                                        body: JSON.stringify(payload),
-                                    });
-                                } catch (error) {
-                                    console.error(
-                                        "Error occurred during checkout: ",
-                                        error
-                                    );
-                                }
-                            }}
+                            onClick={handleCheckout}
+                            disabled={orderPending}
                         >
-                            Checkout
+                            {orderPending ? "Processing..." : "Checkout"}
                         </Button>
                     </SheetFooter>
                 </SheetContent>

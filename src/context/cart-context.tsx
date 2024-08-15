@@ -18,8 +18,10 @@ type CartContext = {
     decreaseCartQuantity: (name: string) => void;
     removeCartItem: (name: string) => void;
     changeTableName: (name: string) => void;
+    setSpecialInstructions: (instructions: string) => void;
     cartItems: CartItem[];
     tableName: string;
+    special_Instructions: string;
 };
 
 const CartContext = createContext({} as CartContext);
@@ -31,48 +33,7 @@ export function useCart() {
 export function CartProvider({ children }: CartProviderProps) {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [tableName, setTableName] = useState("Eden Garden"); // change default as needed
-
-    // function getQuantity(name: string) {
-    //     return cartItems.find((item) => item.name === name)?.quantity || 0;
-    // }
-
-    // function increaseCartQuantity(name: string) {
-    //     setcartItems((currItems) => {
-    //         if (currItems.find((item) => item.name === name) == null) {
-    //             return [...currItems, { name, quantity: 1 }];
-    //         } else {
-    //             return currItems.map((item) => {
-    //                 if (item.name === name) {
-    //                     return { ...item, quantity: item.quantity + 1 };
-    //                 } else {
-    //                     return item;
-    //                 }
-    //             });
-    //         }
-    //     });
-    // }
-
-    // function decreaseCartQuantity(name: string) {
-    //     setcartItems((currItems) => {
-    //         if (currItems.find((item) => item.name === name)?.quantity == 1) {
-    //             return currItems.filter((item) => item.name !== name);
-    //         } else {
-    //             return currItems.map((item) => {
-    //                 if (item.name === name) {
-    //                     return { ...item, quantity: item.quantity - 1 };
-    //                 } else {
-    //                     return item;
-    //                 }
-    //             });
-    //         }
-    //     });
-    // }
-
-    // function removeCartItem(name: string) {
-    //     setcartItems((currItems) => {
-    //         return currItems.filter((item) => item.name !== name);
-    //     });
-    // }
+    const [special_Instructions, setspecial_Instructions] = useState("");
 
     const contextValue = {
         getQuantity: (name: string) => {
@@ -119,8 +80,12 @@ export function CartProvider({ children }: CartProviderProps) {
             setTableName(name);
             console.log(`Table changed to ${name}`);
         },
+        setSpecialInstructions: (instructions: string) => {
+            setspecial_Instructions(instructions);
+        },
         cartItems,
         tableName,
+        special_Instructions,
     };
 
     return (
