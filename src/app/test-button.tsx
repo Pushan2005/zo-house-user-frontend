@@ -1,25 +1,17 @@
 "use client";
 
 import { createClient } from "@/utils/supabase/client";
+import { generatePaymentLink } from "./test-actions";
 
 export default function Test() {
     const supabase = createClient();
     async function handleClick() {
-        const {
-            data: { user },
-        } = await supabase.auth.getUser();
-        const name = user?.user_metadata.name;
-        const email = user?.email;
-        const res = await fetch(
-            `${process.env.NEXT_PUBLIC_BASE_URL!}/api/create-payment-link`,
-            {
-                method: "POST",
-                body: JSON.stringify({
-                    amount: 100,
-                    customer: { name, email, contact: "+919000090000" },
-                }),
-            }
+        const payment = await generatePaymentLink(
+            100,
+            "Pushan",
+            "pushan.sahanaganesh@gmail.com"
         );
+        console.log(payment);
     }
 
     return (

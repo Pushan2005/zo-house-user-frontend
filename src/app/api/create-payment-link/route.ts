@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
         },
         callback_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/test`,
     });
-    console.log(payment);
 
-    return NextResponse.json(payment);
+    return NextResponse.json(payment.short_url);
 }

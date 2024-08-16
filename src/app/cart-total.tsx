@@ -1,3 +1,6 @@
+// ! Razorpay Documentation incomplete, orders are directly inserted into the database without payment for demo purposes.
+// ! Always verify payment signature before inserting order into the database.
+
 "use client";
 import {
     Sheet,
@@ -18,31 +21,36 @@ import { useState } from "react";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import Script from "next/script";
+import { table } from "console";
+import { spec } from "node:test/reporters";
 
 declare global {
     interface Window {
         Razorpay: any;
     }
 }
-const loadScript = () => {
-    return new Promise((resolve) => {
-        const script = document.createElement("script");
-        script.src = "checkout.razorpay.com/v1/checkout.js";
-        script.onload = () => {
-            resolve(true);
-        };
-        script.onerror = () => {
-            resolve(false);
-        };
-        document.body.appendChild(script);
-    });
-};
+// const loadScript = () => {
+//     return new Promise((resolve) => {
+//         const script = document.createElement("script");
+//         script.src = "checkout.razorpay.com/v1/checkout.js";
+//         script.onload = () => {
+//             resolve(true);
+//         };
+//         script.onerror = () => {
+//             resolve(false);
+//         };
+//         document.body.appendChild(script);
+//     });
+// };
 
 function CartTotal({ className }: { className?: string }) {
     const [orderPending, setOrderPending] = useState(false);
-    const { cartItems, setSpecialInstructions, special_Instructions } =
-        useCart();
+    const {
+        cartItems,
+        setSpecialInstructions,
+        special_Instructions,
+        tableName,
+    } = useCart();
     const total = cartItems.reduce((acc, item) => {
         const foodItem = foodItems.find((food) => food.name === item.name);
         return acc + ((foodItem && foodItem.price) || 0) * item.quantity;
@@ -56,60 +64,77 @@ function CartTotal({ className }: { className?: string }) {
 
     const handleCheckout = async () => {
         setOrderPending(true);
-        const res = await loadScript();
-        if (!res) {
-            alert("Razorpay SDK failed to load");
-            setOrderPending(false);
-            return;
-        }
+        // const res = await loadScript();
+        // if (!res) {
+        //     alert("Razorpay SDK failed to load");
+        //     setOrderPending(false);
+        //     return;
+        // }
         const {
             data: { user },
         } = await supabase.auth.getUser();
-        const name = user?.user_metadata.name;
-        const email = user?.email;
-        try {
-            const response = await fetch("/api/create-order", {
-                method: "POST",
-                body: JSON.stringify({ amount: total }),
-            });
-            const data = await response.json();
-            const options = {
-                key: process.env.NEXT_PUBLIC_RZP_KEY_ID!,
-                amount: total * 100, // converts to paise
-                currency: "INR",
-                name: "Zo Cafe",
-                description: "Order Payment Test Transaction",
-                order_id: data.orderId,
-                handler: async function (response: any) {
-                    console.log("Payment Successful: ", response);
-                    // write code to add order to database
-                },
-                prefill: {
-                    name: name,
-                    email: email,
-                    contact: "9999999999",
-                },
-                theme: {
-                    color: "#3399cc",
-                },
-            };
-            const rzp = new window.Razorpay(options);
-            rzp.open();
-        } catch (err) {
-            console.log("Payment failed: ", err);
-        } finally {
-            setOrderPending(false);
-        }
+        const name: string = user!.user_metadata.name;
+        const email: string = user?.email!;
+        // try {
+        //     const response = await fetch("/api/create-order", {
+        //         method: "POST",
+        //         body: JSON.stringify({ amount: total }),
+        //     });
+        //     const data = await response.json();
+        //     const options = {
+        //         key: process.env.NEXT_PUBLIC_RZP_KEY_ID!,
+        //         amount: total * 100, // converts to paise
+        //         currency: "INR",
+        //         name: "Zo Cafe",
+        //         description: "Order Payment Test Transaction",
+        //         order_id: data.orderId,
+        //         handler: async function (response: any) {
+        //             console.log("Payment Successful: ", response);
+        //             // write code to add order to database
+        //         },
+        //         prefill: {
+        //             name: name,
+        //             email: email,
+        //             contact: "9999999999",
+        //         },
+        //         theme: {
+        //             color: "#3399cc",
+        //         },
+        //     };
+        //     const rzp = new window.Razorpay(options);
+        //     rzp.open();
+        // } catch (err) {
+        //     console.log("Payment failed: ", err);
+        // } finally {
+        //     setOrderPending(false);
+        // }
+
+        // const payment = await generatePaymentLink(100, name, email);
 
         const currentTime = new Date().toISOString();
-        const payload = {
-            name: "Placeholder Name",
+        const { error } = await supabase.from("orders").insert({
+            customer: { name: name, email: email },
             items: cartItems,
-            amount: total,
-            orderType: "Placeholder Cash",
-            table: "Placeholder Table",
-            specialInstructions: special_Instructions,
-        };
+            price: total,
+            ordertype: "Online Payment",
+            status: "Pending",
+            order_time: currentTime,
+            special_instructions: special_Instructions,
+            table_name: tableName,
+        });
+        if (error) {
+            alert(`Something went wrong: ${error}`);
+        } else {
+            alert("Order placed successfully");
+        }
+        // const payload = {
+        //     Customer: "Placeholder Name",
+        //     items: cartItems,
+        //     amount: total,
+        //     orderType: "Placeholder Cash",
+        //     table: "Placeholder Table",
+        //     specialInstructions: special_Instructions,
+        // };
     };
 
     return (
