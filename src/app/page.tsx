@@ -31,8 +31,7 @@ export default async function Home({
                 <div className="space-y-4"></div>
                 <div className="flex items-center justify-between">
                     <TableSelector defaultTable={table} />
-                    <LogoutButton />
-                    <Test />
+                    <LogoutButton />                    
                 </div>
                 <div className="mt-4">
                     {foodItems.map((foodItem) => (
