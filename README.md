@@ -2,7 +2,7 @@
 
 ### A project initially built for Zo House's in-house cafe.
 
-Note: Admin and Kitchen frontend code are kept private.
+Note: Admin and Kitchen repositories are kept private.
 
 ### This was my first ever end-to-end application, including configuring hosting on a VPS.
 
